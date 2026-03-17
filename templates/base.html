@@ -66,5 +66,46 @@
 {% for body_script in body_scripts %}
     <script{% if body_script.module %} type="module"{% endif %}>{{ body_script.script }}</script>
 {% endfor %}
+    <script>                                                                                          
+  (function() {                                                                                     
+    if (!window.location.pathname.includes('/acara/distribucion')) return;                          
+                                                                                                    
+    const params = new URLSearchParams(window.location.search);                                     
+    const conditions = [];                                                                          
+                                                                                                    
+    for (const [key, value] of params) {
+      if (key.startsWith('_')) continue;                                                            
+      const safe = value.replace(/'/g, "''");                                                       
+      if (key.endsWith('__exact')) {                                                                
+        conditions.push(`${key.replace('__exact','')} = '${safe}'`);                                
+      } else if (key.endsWith('__contains')) {                                                      
+        conditions.push(`${key.replace('__contains','')} LIKE '%${safe}%'`);                        
+      }                                                                                             
+    }
+                                                                                                    
+    const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';                     
+    const sql = `SELECT COUNT(*) as n, SUM(CAST(monto AS REAL)) as total FROM distribucion 
+  ${where}`;                                                                                        
+                  
+    fetch(`/acara.json?sql=${encodeURIComponent(sql)}`)                                             
+      .then(r => r.json())
+      .then(data => {                                                                               
+        const [n, total] = data.rows[0];                                                            
+        if (!total && total !== 0) return;                                                          
+        const fmt = new Intl.NumberFormat('es-AR', { style:'currency', currency:'ARS',              
+  maximumFractionDigits:0 }).format(total);                                                         
+        const banner = document.createElement('div');                                               
+        banner.className = 'sum-banner';                                                            
+        banner.innerHTML = `<div class="sum-inner">
+          <span class="sum-label">Total filtrado</span>                                             
+          <span class="sum-value">${fmt}</span>
+          <span class="sum-count">${n.toLocaleString('es-AR')} registros</span>                     
+        </div>`;                                                                                    
+        const content = document.querySelector('.content');                                         
+        if (content) content.insertBefore(banner, content.firstChild);                              
+      }).catch(console.error);                                                                      
+  })();                                                                                             
+  </script>                                                                                         
+                                                                    
 </body>
 </html>
