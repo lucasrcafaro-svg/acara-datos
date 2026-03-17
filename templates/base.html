@@ -1,0 +1,70 @@
+{% import "_crumbs.html" as crumbs with context %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>{% block title %}ACARA{% endblock %}</title>
+    <link rel="stylesheet" href="{{ urls.static('app.css') }}?{{ app_css_hash }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% for url in extra_css_urls %}
+    <link rel="stylesheet" href="{{ url.url }}"{% if url.sri %} integrity="{{ url.sri }}" crossorigin="anonymous"{% endif %}>
+{% endfor %}
+{% for url in extra_js_urls %}
+    <script {% if url.module %}type="module" {% endif %}src="{{ url.url }}"{% if url.sri %} integrity="{{ url.sri }}" crossorigin="anonymous"{% endif %}></script>
+{% endfor %}
+{%- if alternate_url_json -%}
+    <link rel="alternate" type="application/json+datasette" href="{{ alternate_url_json }}">
+{%- endif -%}
+{%- block extra_head %}{% endblock -%}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/-/static/acara.css">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<div class="not-footer">
+
+<header>
+  <nav>
+    <div class="nav-left">
+      <a href="/" class="nav-brand">
+        <span class="brand-icon">⚡</span>
+        <span class="brand-text">ACARA</span>
+      </a>
+      <div class="nav-links">
+        <a href="/acara/distribucion">Datos</a>
+        <a href="/acara?sql=SELECT+tipo%2C+anio%2C+SUM(monto)+as+total+FROM+distribucion+GROUP+BY+tipo%2C+anio+ORDER+BY+anio">Por Año</a>
+        <a href="/acara?sql=SELECT+entidad%2C+SUM(monto)+as+total+FROM+distribucion+GROUP+BY+entidad+ORDER+BY+total+DESC+LIMIT+20">Top Entidades</a>
+        <a href="/acara?sql=SELECT+*+FROM+distribucion">SQL</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      {% block crumbs %}{% endblock %}
+    </div>
+  </nav>
+</header>
+
+{% block messages %}
+{% if show_messages %}
+    {% for message, message_type in show_messages() %}
+        <p class="message-{% if message_type == 1 %}info{% elif message_type == 2 %}warning{% elif message_type == 3 %}error{% endif %}">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+{% endblock %}
+
+<section class="content">
+{% block content %}
+{% endblock %}
+</section>
+</div>
+
+<footer class="ft">
+  <div class="footer-inner">
+    <span>Base de Datos ACARA &mdash; Distribución de Fondos PBA</span>
+    <span>{% block footer %}{% include "_footer.html" %}{% endblock %}</span>
+  </div>
+</footer>
+
+{% include "_close_open_menus.html" %}
+{% for body_script in body_scripts %}
+    <script{% if body_script.module %} type="module"{% endif %}>{{ body_script.script }}</script>
+{% endfor %}
+</body>
+</html>

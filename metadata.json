@@ -1,0 +1,25 @@
+{
+  "title": "Base de Datos ACARA",
+  "description": "Distribución de fondos TGRS y SUGIT — Provincia de Buenos Aires",
+  "databases": {
+    "acara": {
+      "title": "ACARA — Distribución de Fondos",
+      "description": "Datos de distribución mensual de fondos TGRS y SUGIT desde 2019",
+      "tables": {
+        "distribucion": {
+          "title": "Distribución por Entidad",
+          "description": "Monto distribuido a cada organismo por mes, año y tipo de fondo",
+          "columns": {
+            "tipo":        "Tipo de fondo (TGRS o SUGIT)",
+            "anio":        "Año del período",
+            "mes":         "Mes del período",
+            "cod_entidad": "Código numérico del organismo",
+            "entidad":     "Nombre del organismo receptor",
+            "monto":       "Monto distribuido en pesos"
+          },
+          "facets": ["tipo", "anio", "mes"]
+        }
+      }
+    }
+  }
+}

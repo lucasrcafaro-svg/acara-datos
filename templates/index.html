@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}ACARA — Base de Datos{% endblock %}
+{% block body_class %}index{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <div class="hero-content">
+    <h1 class="hero-title">Base de Datos <span class="hero-accent">ACARA</span></h1>
+    <p class="hero-subtitle">Distribución de fondos TGRS y SUGIT — Provincia de Buenos Aires</p>
+    <a href="/acara/distribucion" class="hero-btn">Explorar datos →</a>
+  </div>
+</div>
+
+<div class="metrics-grid" id="metrics">
+  <div class="metric-card" id="m-tgrs">
+    <div class="metric-label">Total TGRS</div>
+    <div class="metric-value" id="val-tgrs">—</div>
+    <div class="metric-sub">Acumulado histórico</div>
+  </div>
+  <div class="metric-card" id="m-sugit">
+    <div class="metric-label">Total SUGIT</div>
+    <div class="metric-value" id="val-sugit">—</div>
+    <div class="metric-sub">Acumulado histórico</div>
+  </div>
+  <div class="metric-card" id="m-registros">
+    <div class="metric-label">Registros</div>
+    <div class="metric-value" id="val-registros">—</div>
+    <div class="metric-sub">Filas en la base</div>
+  </div>
+  <div class="metric-card" id="m-entidades">
+    <div class="metric-label">Entidades</div>
+    <div class="metric-value" id="val-entidades">—</div>
+    <div class="metric-sub">Organismos distintos</div>
+  </div>
+</div>
+
+<div class="accesos">
+  <h2 class="section-title">Accesos rápidos</h2>
+  <div class="accesos-grid">
+    <a class="acceso-card" href="/acara/distribucion?tipo=TGRS">
+      <span class="acceso-icon">🏛</span>
+      <span class="acceso-title">Datos TGRS</span>
+      <span class="acceso-desc">Filtrar solo registros TGRS</span>
+    </a>
+    <a class="acceso-card" href="/acara/distribucion?tipo=SUGIT">
+      <span class="acceso-icon">📋</span>
+      <span class="acceso-title">Datos SUGIT</span>
+      <span class="acceso-desc">Filtrar solo registros SUGIT</span>
+    </a>
+    <a class="acceso-card" href="/acara?sql=SELECT+entidad%2C+tipo%2C+SUM(monto)+as+total+FROM+distribucion+GROUP+BY+entidad%2C+tipo+ORDER+BY+total+DESC+LIMIT+20">
+      <span class="acceso-icon">🏆</span>
+      <span class="acceso-title">Top Entidades</span>
+      <span class="acceso-desc">Las que más recibieron en total</span>
+    </a>
+    <a class="acceso-card" href="/acara?sql=SELECT+anio%2C+mes%2C+tipo%2C+ROUND(SUM(monto)%2C0)+as+total+FROM+distribucion+GROUP+BY+anio%2C+mes%2C+tipo+ORDER+BY+anio%2C+mes">
+      <span class="acceso-icon">📅</span>
+      <span class="acceso-title">Por Período</span>
+      <span class="acceso-desc">Totales agrupados por año y mes</span>
+    </a>
+    <a class="acceso-card" href="/acara/distribucion">
+      <span class="acceso-icon">🔍</span>
+      <span class="acceso-title">Explorar tabla</span>
+      <span class="acceso-desc">Buscar y filtrar todos los datos</span>
+    </a>
+    <a class="acceso-card" href="/acara?sql=SELECT+*+FROM+distribucion+LIMIT+10">
+      <span class="acceso-icon">💻</span>
+      <span class="acceso-title">Consulta SQL</span>
+      <span class="acceso-desc">Escribir tu propia consulta</span>
+    </a>
+  </div>
+</div>
+
+<script>
+function fmt(n) {
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
+  return '$' + n.toFixed(0);
+}
+function fmtN(n) {
+  return n.toLocaleString('es-AR');
+}
+
+async function loadMetrics() {
+  const base = window.location.origin;
+  try {
+    const [tgrs, sugit, regs, ents] = await Promise.all([
+      fetch(`${base}/acara.json?sql=SELECT+ROUND(SUM(monto),0)+as+v+FROM+distribucion+WHERE+tipo%3D'TGRS'`).then(r=>r.json()),
+      fetch(`${base}/acara.json?sql=SELECT+ROUND(SUM(monto),0)+as+v+FROM+distribucion+WHERE+tipo%3D'SUGIT'`).then(r=>r.json()),
+      fetch(`${base}/acara.json?sql=SELECT+COUNT(*)+as+v+FROM+distribucion`).then(r=>r.json()),
+      fetch(`${base}/acara.json?sql=SELECT+COUNT(DISTINCT+entidad)+as+v+FROM+distribucion`).then(r=>r.json()),
+    ]);
+    document.getElementById('val-tgrs').textContent     = fmt(tgrs.rows[0][0]);
+    document.getElementById('val-sugit').textContent    = fmt(sugit.rows[0][0]);
+    document.getElementById('val-registros').textContent = fmtN(regs.rows[0][0]);
+    document.getElementById('val-entidades').textContent = fmtN(ents.rows[0][0]);
+  } catch(e) { console.error(e); }
+}
+loadMetrics();
+</script>
+{% endblock %}
